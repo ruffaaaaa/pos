@@ -14,6 +14,11 @@ class Customer extends CI_Controller {
         if (!$this->session->userdata('user_id')) {
             redirect('auth/login');
         }
+
+         if ($this->session->userdata('role') === 'cashier') {
+        $this->session->set_flashdata('error', 'You are not allowed to access the dashboard.');
+        redirect('pos'); // or any other page for cashiers
+    }
     }
 
 

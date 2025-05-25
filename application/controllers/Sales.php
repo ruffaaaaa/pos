@@ -15,6 +15,7 @@ class Sales extends CI_Controller {
         if (!$this->session->userdata('user_id')) {
             redirect('auth/login');
         }
+        
     }
 
     public function index() {
