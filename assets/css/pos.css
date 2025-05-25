@@ -1,0 +1,53 @@
+.pos-container {
+    display: flex;
+    gap: 20px;
+}
+
+.product-panel,
+.cart-panel {
+    padding: 20px;
+    border: 1px solid #ccc;
+    border-radius: 10px;
+    background: #f9f9f9;
+}
+
+.product-panel {
+    width: 40%;
+    max-height: 80vh;
+    overflow-y: auto;
+}
+
+.cart-panel {
+    width: 60%;
+}
+
+.cart-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 10px;
+}
+
+.cart-table th,
+.cart-table td {
+    border: 1px solid #ccc;
+    padding: 8px;
+    text-align: center;
+}
+
+.summary {
+    margin-top: 15px;
+    font-size: 18px;
+    font-weight: bold;
+}
+
+.payment-section {
+    margin-top: 20px;
+}
+
+.btn-success {
+    background: green;
+    color: white;
+    padding: 10px;
+    border: none;
+    border-radius: 5px;
+}

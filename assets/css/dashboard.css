@@ -1,0 +1,122 @@
+body {
+    font-family: Arial, sans-serif;
+    background-color: #f4f6f9;
+    margin: 0;
+}
+
+.container {
+    max-width: 1400px;
+    margin: auto;
+}
+
+.card-grid {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+    margin-bottom: 10px;
+}
+
+.card-dashboard {
+    flex: 1;
+    min-width: 250px;
+    background-color: #fff;
+    padding: 20px;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+    display: flex;
+    align-items: center;
+    transition: transform 0.2s;
+}
+
+.card-dashboard:hover {
+    transform: translateY(-5px);
+}
+
+.card-dashboard .icon {
+    font-size: 24px;
+    margin-right: 15px;
+    padding: 10px;
+    border-radius: 5%;
+    color: #fff;
+    width: 45px;
+    height: 45px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.card-dashboard.items .icon {
+    background-color: #17a2b8;
+}
+
+.card-dashboard.suppliers .icon {
+    background-color: #dc3545;
+}
+
+.card-dashboard.customers .icon {
+    background-color: #28a745;
+}
+
+.card-dashboard .text {
+    font-size: 16px;
+    color: #333;
+}
+
+.card-dashboard .number {
+    font-size: 24px;
+    font-weight: bold;
+    color: #000;
+}
+
+.card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 15px;
+    border-bottom: 1px solid #ddd;
+    padding-bottom: 10px;
+}
+
+.card-header h3 {
+    margin: 0;
+    font-size: 18px;
+    color: #333;
+}
+
+.card-tools a {
+    color: #333;
+    margin-left: 10px;
+    text-decoration: none;
+    font-size: 16px;
+}
+
+table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 10px;
+}
+
+th,
+td {
+    text-align: left;
+    padding: 10px 8px;
+    border-bottom: 1px solid #ddd;
+    font-size: 14px;
+}
+
+.up {
+    color: green;
+    margin-right: 5px;
+}
+
+.center {
+    text-align: center;
+}
+
+.card-table {
+    min-width: 250px;
+    background-color: #fff;
+    padding: 20px;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+    align-items: center;
+    transition: transform 0.2s;
+}
