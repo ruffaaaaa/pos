@@ -10,6 +10,9 @@
                 <a href="<?= base_url('sales') ?>" class="<?= ($this->uri->segment(1) == 'sales') ? 'active' : '' ?>">
                     <i class="fi fi-rr-receipt"></i><span>Sales</span>
                 </a>
+                <a href="<?= base_url('history') ?>" class="<?= ($this->uri->segment(1) == 'history') ? 'active' : '' ?>">
+                    <i class="fi fi-rr-newspaper"></i><span>History</span>
+                </a>
             <?php else: ?>
                 <a href="<?= base_url('dashboard') ?>" class="<?= ($this->uri->segment(1) == 'dashboard') ? 'active' : '' ?>">
                     <i class="fi fi-rr-home"></i><span>Dashboard</span>
@@ -25,6 +28,9 @@
                 </a>
                 <a href="<?= base_url('sales') ?>" class="<?= ($this->uri->segment(1) == 'sales') ? 'active' : '' ?>">
                     <i class="fi fi-rr-receipt"></i><span>Sales</span>
+                </a>
+                <a href="<?= base_url('purchase') ?>" class="<?= ($this->uri->segment(1) == 'purchase') ? 'active' : '' ?>">
+                    <i class="fi fi-rr-receipt"></i><span>Purchase Order</span>
                 </a>
                 <a href="<?= base_url('inventory') ?>" class="<?= ($this->uri->segment(1) == 'inventory') ? 'active' : '' ?>">
                     <i class="fi fi-rr-boxes"></i><span>Inventory</span>
@@ -42,6 +48,9 @@
                 </a>
                 <a href="<?= base_url('users') ?>" class="<?= ($this->uri->segment(1) == 'users') ? 'active' : '' ?>">
                     <i class="fi fi-rr-users-alt"></i><span>Users</span>
+                </a>
+                <a href="<?= base_url('logs') ?>" class="<?= ($this->uri->segment(1) == 'logs') ? 'active' : '' ?>">
+                    <i class="fi fi-rr-newspaper"></i><span>Logs</span>
                 </a>
             <?php endif; ?>
         </div>

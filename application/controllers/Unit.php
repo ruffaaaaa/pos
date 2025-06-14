@@ -36,57 +36,105 @@ class Unit extends CI_Controller {
     
 
     public function store() {
-        $this->form_validation->set_rules('unit_name', 'Unit Name', 'required');
-        $this->form_validation->set_rules('abbreviation', 'Abbreviation', 'required');
+    $this->form_validation->set_rules('unit_name', 'Unit Name', 'required');
+    $this->form_validation->set_rules('abbreviation', 'Abbreviation', 'required');
 
-        if ($this->form_validation->run() === FALSE) {
-            $this->session->set_flashdata('error', validation_errors());
-            redirect('units');  // Your main units page
-        } else {
-            $data = [
-                'unit_name'    => $this->input->post('unit_name'),
-                'abbreviation' => $this->input->post('abbreviation'),
-                'status'       => 'active'  // Default status
-            ];
+    if ($this->form_validation->run() === FALSE) {
+        $this->session->set_flashdata('error', validation_errors());
+        redirect('units');
+    } else {
+        $data = [
+            'unit_name'    => $this->input->post('unit_name'),
+            'abbreviation' => $this->input->post('abbreviation'),
+        ];
 
-            $this->unitModel->insert($data);  // Call model to insert
-            $this->session->set_flashdata('success', 'Unit added successfully.');
-            redirect('units');
-        }
+        $this->unitModel->insert($data);
+        $insert_id = $this->db->insert_id();
+
+        // 🔒 Log create
+        $log = [
+            'user_id'    => $this->session->userdata('user_id'),
+            'table_name' => 'Units',
+            'record_id'  => $insert_id,
+            'action'     => 'Created',
+            'old_data'   => null,
+            'new_data'   => json_encode($data),
+            'description'=> 'Unit created',
+            'created_at' => date('Y-m-d H:i:s')
+        ];
+        $this->db->insert('tbl_logs', $log);
+
+        $this->session->set_flashdata('success', 'Unit added successfully.');
+        redirect('units');
     }
+}
+
 
 public function update()
 {
-    $unit_id = $this->input->post('unit_id');
-    $unit_name = $this->input->post('unit_name');
+    $unit_id     = $this->input->post('unit_id');
+    $unit_name   = $this->input->post('unit_name');
     $abbreviation = $this->input->post('abbreviation');
 
-    $data = [
+    $new_data = [
         'unit_name' => $unit_name,
         'abbreviation' => $abbreviation,
     ];
 
+    // 📦 Get old data first
+    $old_data = $this->db->get_where('tbl_units', ['unit_id' => $unit_id])->row_array();
+
     $this->db->where('unit_id', $unit_id);
-    $updated = $this->db->update('tbl_units', $data);
+    $updated = $this->db->update('tbl_units', $new_data);
 
     if ($updated) {
+        // 🔒 Log update
+        $log = [
+            'user_id'    => $this->session->userdata('user_id'),
+            'table_name' => 'Units',
+            'record_id'  => $unit_id,
+            'action'     => 'Updated',
+            'old_data'   => json_encode($old_data),
+            'new_data'   => json_encode($new_data),
+            'description'=> 'Unit updated',
+            'created_at' => date('Y-m-d H:i:s')
+        ];
+        $this->db->insert('tbl_logs', $log);
+
         $this->session->set_flashdata('success', 'Unit updated successfully.');
     } else {
         $this->session->set_flashdata('error', 'Failed to update unit.');
     }
 
-    redirect('unit'); // or wherever your unit list is
+    redirect('unit');
 }
 
 
-    public function delete($id) {
-        if ($this->unitModel->delete($id)) {
-            $this->session->set_flashdata('success', 'Unit deleted successfully.');
-        } else {
-            $this->session->set_flashdata('error', 'Failed to delete unit.');
-        }
-        redirect('units');
+public function delete($id) {
+    // 📦 Get old data before delete
+    $old_data = $this->db->get_where('tbl_units', ['unit_id' => $id])->row_array();
+
+    if ($this->unitModel->delete($id)) {
+        // 🔒 Log delete
+        $log = [
+            'user_id'    => $this->session->userdata('user_id'),
+            'table_name' => 'Units',
+            'record_id'  => $id,
+            'action'     => 'Deleted',
+            'old_data'   => json_encode($old_data),
+            'new_data'   => null,
+            'description'=> 'Unit deleted',
+            'created_at' => date('Y-m-d H:i:s')
+        ];
+        $this->db->insert('tbl_logs', $log);
+
+        $this->session->set_flashdata('success', 'Unit deleted successfully.');
+    } else {
+        $this->session->set_flashdata('error', 'Failed to delete unit.');
     }
+
+    redirect('units');
+}
 
 
 

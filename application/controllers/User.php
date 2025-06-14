@@ -28,6 +28,19 @@ class User extends CI_Controller {
     }
     }
 
+    private function log_action($table, $record_id, $action, $old = null, $new = null, $description = '') {
+    $this->db->insert('tbl_logs', [
+        'user_id'     => $this->session->userdata('user_id'),
+        'table_name'  => $table,
+        'record_id'   => $record_id,
+        'action'      => $action,
+        'old_data'    => $old ? json_encode($old) : null,
+        'new_data'    => $new ? json_encode($new) : null,
+        'description' => $description,
+        'created_at'  => date('Y-m-d H:i:s')
+    ]);
+}
+
 
     public function index() {
         $data['users'] = $this->userModel->get_all();
@@ -101,6 +114,33 @@ class User extends CI_Controller {
 
 
 
+public function delete($id = null) {
+    if ($id === null) {
+        $this->session->set_flashdata('error', 'Invalid user ID.');
+        redirect('users');
+        return;
+    }
+
+    // Get old data for logs before deletion
+    $old_data = $this->db->get_where('tbl_users', ['user_id' => $id])->row_array();
+
+    if (!$old_data) {
+        $this->session->set_flashdata('error', 'User not found.');
+        redirect('users');
+        return;
+    }
+
+    $deleted = $this->userModel->delete($id); // Assumes delete method exists in userModel
+
+    if ($deleted) {
+        $this->log_action('tbl_users', $id, 'Deleted', $old_data, null, 'User deleted');
+        $this->session->set_flashdata('success', 'User deleted successfully.');
+    } else {
+        $this->session->set_flashdata('error', 'Failed to delete user.');
+    }
+
+    redirect('users');
+}
 
 
 }

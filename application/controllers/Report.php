@@ -60,6 +60,12 @@ class Report extends CI_Controller {
 
             $data['inventory'] = $inventory;
         }
+        elseif ($report == 'history') {
+            $this->load->model('salesModel');
+            $data['sales'] = $this->salesModel->get_all_sales($start_date, $end_date);
+
+        } 
+
 
         $data['report'] = $report;
         $data['start_date'] = $start_date_raw; // for form input display

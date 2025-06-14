@@ -16,3 +16,5 @@ $route['products'] = 'product/index';  // Route for login processing
 $route['units'] = 'unit/index';  // Route for login processing
 $route['users'] = 'user/index';  // Route for login processing
 
+$route['receipt/(:num)'] = 'history/receipt/$1';  // Route for receipt processing
+

@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>Receipt</title>
+    <title>Purchase Order</title>
     <style type="text/css">
         html {
             font-family: Verdana, Arial, sans-serif;
@@ -39,7 +39,6 @@
             margin-bottom: 10px;
         }
 
-        /* Flex layout for items */
         .transaction p {
             display: flex;
             justify-content: space-between;
@@ -47,7 +46,6 @@
             font-size: 12px;
         }
 
-        /* Product name & qty - left aligned, takes most space */
         .transaction p .item-name {
             flex: 2;
             white-space: nowrap;
@@ -55,7 +53,6 @@
             text-overflow: ellipsis;
         }
 
-        /* Unit price and subtotal - right aligned */
         .transaction p .unit-price,
         .transaction p .subtotal {
             flex: 1;
@@ -63,7 +60,6 @@
             min-width: 50px;
         }
 
-        /* Summary values layout */
         .transaction-value p {
             display: flex;
             justify-content: space-between;
@@ -71,12 +67,7 @@
             font-size: 12px;
         }
 
-        .transaction-value p strong {
-            font-weight: 600;
-        }
-
         .transaction-value p.total {
-            border-top: 1px solid #000;
             padding-top: 5px;
             font-weight: bold;
         }
@@ -104,19 +95,20 @@
         <div class="logo">
             <img src="<?= base_url('assets/img/logo.png') ?>" alt="logo" style="max-width: 50px; display: block; margin: 0 auto;" />
         </div>
-        <div class="title">Receipt</div>
+        <div class="title">Purchase Order</div>
 
         <div class="head">
-            <p><strong>Receipt #:</strong> <?= isset($sale->sale_id) ? $sale->sale_id : 'N/A' ?></p>
-            <p><strong>Customer Name:</strong> <?= isset($sale->customer_name) ? $sale->customer_name : 'N/A' ?></p>
+            <p><strong>Purchase Order #:</strong> <?= isset($po->po_id) ? $po->po_id : 'N/A' ?></p>
+            <p><strong>Supplier:</strong> <?= isset($po->supplier_name) ? $po->supplier_name : 'N/A' ?></p>
+            <p><strong>Processed By:</strong> <?= isset($po->username) ? $po->username : 'N/A' ?></p>
             <p><strong>Date:</strong> <span id="realTimeDate"></span></p>
         </div>
 
         <div class="transaction">
-            <?php if (!empty($sale_items)): ?>
-                <?php foreach ($sale_items as $item): ?>
+            <?php if (!empty($po_items)): ?>
+                <?php foreach ($po_items as $item): ?>
                     <p>
-                        <span class="item-name"><?= isset($item->product_name) ? $item->product_name : 'Unknown' ?> x <?= $item->quantity ?></span>
+                        <span class="item-name"><?= $item->product_name ?> x <?= $item->quantity ?></span>
                         <span class="unit-price">₱<?= number_format($item->unit_price, 2) ?></span>
                         <span class="subtotal">₱<?= number_format($item->subtotal, 2) ?></span>
                     </p>
@@ -127,34 +119,21 @@
         </div>
 
         <div class="transaction-value">
-            <p><strong>Sub total</strong> <span>₱<?= isset($sale->total_amount) ? number_format($sale->total_amount, 2) : '0.00' ?></span></p>
-            <p>Discount <span>₱<?= isset($sale->discount) ? number_format($sale->discount, 2) : '0.00' ?></span></p>
-            <p class="total"><strong>Total</strong> <span>₱<?= isset($sale->final_amount) ? number_format($sale->final_amount, 2) : '0.00' ?></span></p>
-
-            <p><strong>Cash Paid</strong> <span>₱<?= isset($sale->payment_amount) ? number_format($sale->payment_amount, 2) : '0.00' ?></span></p>
-            <p><strong>Change</strong> 
-                <span>
-                    ₱<?= (isset($sale->payment_amount) && isset($sale->final_amount)) ? number_format($sale->payment_amount - $sale->final_amount, 2) : '0.00' ?>
-                </span>
-            </p>
+            <p class="total"><strong>Total Amount</strong> <span>₱<?= number_format($po->subtotal ?? 0, 2) ?></span></p>
         </div>
 
-        <div class="thanks">--- Thank You ---</div>
+        <div class="thanks">--- Thank you for your business ---</div>
     </div>
 </body>
-
 
 <script>
     function updateDateTime() {
         const now = new Date();
-        const formatted = now.toLocaleString(); // You can customize format here
+        const formatted = now.toLocaleString();
         document.getElementById('realTimeDate').innerText = formatted;
     }
-
-    // Update every second
     setInterval(updateDateTime, 1000);
-
-    // Initial call
     updateDateTime();
 </script>
+
 </html>

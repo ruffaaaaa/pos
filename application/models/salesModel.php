@@ -88,6 +88,25 @@ class salesModel extends CI_Model {
         return $query->result();
     }
 
+    public function get_all_sales($start_date = null, $end_date = null)
+    {
+        $this->db->select('s.*, c.customer_name, si.product_id, si.quantity, si.unit_price, si.subtotal')
+            ->from('tbl_sales s')
+            ->join('tbl_customers c', 'c.customer_id = s.customer_id', 'left')
+            ->join('tbl_sale_items si', 'si.sale_id = s.sale_id', 'left');
+
+        // Apply date filter if both start and end dates are provided
+        if ($start_date && $end_date) {
+            $this->db->where('DATE(s.created_at) >=', $start_date);
+            $this->db->where('DATE(s.created_at) <=', $end_date);
+        }
+
+        $this->db->order_by('s.created_at', 'DESC');
+
+        return $this->db->get()->result();
+    }
+
+
 }
 
 

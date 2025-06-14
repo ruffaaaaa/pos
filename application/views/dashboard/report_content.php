@@ -43,6 +43,7 @@ $end_date_query = isset($end_date) ? '&end_date=' . urlencode($end_date) : '';
 <div class="top-bar">
   <a href="?report=sales<?= $start_date_query . $end_date_query ?>" class="<?= ($report == 'sales') ? 'active' : '' ?>">Sales Report</a>
   <a href="?report=inventory<?= $start_date_query . $end_date_query ?>" class="<?= ($report == 'inventory') ? 'active' : '' ?>">Inventory Report</a>
+  <a href="?report=history<?= $start_date_query . $end_date_query ?>" class="<?= ($report == 'history') ? 'active' : '' ?>">Detailed Sales Report</a>
 </div>
 
 
@@ -53,6 +54,9 @@ $end_date_query = isset($end_date) ? '&end_date=' . urlencode($end_date) : '';
       $this->load->view('dashboard/report/salesReport');
     } elseif ($report == 'inventory') {
       $this->load->view('dashboard/report/inventoryReport');
+    }
+    elseif ($report == 'history') {
+      $this->load->view('dashboard/report/historyReport');
     } else {
       echo "<p>Please select a report.</p>";
     }

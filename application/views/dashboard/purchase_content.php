@@ -252,13 +252,13 @@
             </thead>
             <tbody>
                 <?php foreach ($data['products'] as $product): ?>
-                    <tr data-id="<?= $product->product_id ?>" data-name="<?= $product->product_name ?>" data-price="<?= $product->retail_price ?>">
+                    <tr data-id="<?= $product->product_id ?>" data-name="<?= $product->product_name ?>" data-price="<?= $product->cost_price ?>">
                         <td style="font-size: 13px;"><?= $product->barcode ?></td>
 
                         <td style="font-size: 13px;"><?= $product->product_name ?></td>
                         <td style="font-size: 13px;"><?= $product->category_name ?></td>
 
-                        <td style="font-size: 13px;">₱<?= number_format($product->retail_price, 2) ?></td>
+                        <td style="font-size: 13px;">₱<?= number_format($product->cost_price, 2) ?></td>
                         <td style="font-size: 13px;"><?= $product->current_stock?></td>
                         <td style="font-size: 13px;"><button onclick="addToCart(<?= $product->product_id ?>)">Add</button></td>
                     </tr>
@@ -302,32 +302,21 @@
         </div>
 
         <div id="customer-section" style="font-size: 14px;">
-            <label for="customer">Customer:</label>
-            <select name="customer_id" id="customer">
-                <option value="" disabled selected>Select Customer</option>
-                <?php foreach ($data['customers'] as $customer): ?>
-                    <option value="<?= $customer->customer_id ?>">
-                        <?= htmlspecialchars($customer->customer_name) ?>
+            <label for="customer">Supplier:</label>
+            <select name="supplier_id" id="customer">
+                <option value="" disabled selected>Select Supplier</option>
+                <?php foreach ($data['suppliers'] as $supplier): ?>
+                    <option value="<?= $supplier->supplier_id ?>">
+                        <?= htmlspecialchars($supplier->supplier_name) ?>
                     </option>
                 <?php endforeach; ?>
             </select>
         </div>
 
-        <div id="cash-payment-section" style="font-size: 14px;">
-            <label for="cash-amount">Enter Cash Amount:</label>
-            <input type="number" id="cash-amount" name="cash_amount" step="0.01" placeholder="Enter cash amount">
-        </div>
-
-
-
-        <p id="change-info" style="font-size: 14px;">
-            Change <span>₱<span id="change-amount">0.00</span></span>
-        </p>
-
-        <input type="hidden" name="cart" id="cart-data">
+        <input type="hidden" name="items" id="items-data">
         <input type="hidden" name="total" id="total-data">
 
-        <button type="submit">Process Payment</button>
+        <button type="submit">Print Purchase Order</button>
     </form>
 
 
@@ -413,7 +402,7 @@ function renderCart() {
     document.getElementById('discountTotal').textContent = discountedTotal.toFixed(2);
 
     // Save data for backend
-    document.getElementById('cart-data').value = JSON.stringify(cart);
+    document.getElementById('items-data').value = JSON.stringify(cart);
     document.getElementById('total-data').value = total.toFixed(2);
 }
 
@@ -433,40 +422,16 @@ function removeFromCart(index) {
 // Discount input
 document.getElementById('discount').addEventListener('input', renderCart);
 
-// Cash amount input
-document.getElementById('cash-amount').addEventListener('input', function () {
-    const cash = parseFloat(this.value);
-    const total = parseFloat(document.getElementById('discountTotal').textContent);
-    if (!isNaN(cash)) {
-        const change = cash - total;
-        document.getElementById('change-amount').textContent = change.toFixed(2);
-        document.getElementById('change-info').style.display = 'block';
-    } else {
-        document.getElementById('change-amount').textContent = '0.00';
-        document.getElementById('change-info').style.display = 'none';
-    }
-});
 
 // Checkout submission
 document.getElementById('checkout-form').addEventListener('submit', function(e) {
     e.preventDefault();
 
     const customerId = document.getElementById('customer').value;
-    const cashAmount = document.getElementById('cash-amount').value;
 
     const total = parseFloat(document.getElementById('discountTotal').textContent);
 
-    if (!cashAmount || parseFloat(cashAmount) <= 0) {
-        alert('Please enter a valid cash amount.');
-        return;
-    }
-
-    if (parseFloat(cashAmount) < total) {
-        alert('Cash is less than the total amount. Please enter sufficient payment.');
-        return;
-    }
-
-    fetch('<?= base_url("sales/process") ?>', {
+    fetch('<?= base_url("purchase/process_po") ?>', {
         method: 'POST',
         headers: {'Content-Type': 'application/x-www-form-urlencoded'},
         body: new URLSearchParams(new FormData(this))
@@ -474,15 +439,14 @@ document.getElementById('checkout-form').addEventListener('submit', function(e) 
     .then(res => res.json())
     .then(data => {
         alert(data.message);
-        if (data.sale_id) {
-            window.location.href = "<?= site_url('sales/receipt/') ?>" + data.sale_id;
+        if (data.po_id) {
+            window.location.href = "<?= site_url('purchase/print_po/') ?>" + data.po_id;
         } else {
             alert('An error occurred, please try again.');
         }
 
         cart = [];
         renderCart();
-        document.getElementById('cash-amount').value = '';
         document.getElementById('change-info').style.display = 'none';
     })
     .catch(err => {

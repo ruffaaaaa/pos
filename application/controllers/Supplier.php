@@ -48,13 +48,28 @@ class Supplier extends CI_Controller {
                 'status'          => 'active'
             ];
 
-            $this->supplierModel->insert($data);  // ✅ Use SupplierModel
+            $this->supplierModel->insert($data);
+
+            // 🔒 Log creation
+            $log = [
+                'user_id'    => $this->session->userdata('user_id'),
+                'table_name' => 'Supplier',
+                'record_id'  => $this->db->insert_id(),
+                'action'     => 'Created',
+                'old_data'   => null,
+                'new_data'   => json_encode($data),
+                'description'=> 'Supplier created',
+                'created_at' => date('Y-m-d H:i:s')
+            ];
+            $this->db->insert('tbl_logs', $log);
+
             $this->session->set_flashdata('success', 'Supplier added successfully.');
             redirect('suppliers');
         }
     }
 
-    public function edit(){
+
+        public function edit(){
         $id = $this->input->post('supplier_id');
 
         if (empty($id) || !$this->input->post('supplier_name')) {
@@ -73,30 +88,63 @@ class Supplier extends CI_Controller {
         );
 
         try {
+            // 📦 Get old data before update
+            $old_data = $this->supplierModel->get_by_id($id);
+
             $result = $this->supplierModel->update($id, $data);
+
             if ($result) {
-                $this->session->set_flashdata('success', 'Customer updated successfully.');
+                // 🔒 Log update
+                $log = [
+                    'user_id'    => $this->session->userdata('user_id'),
+                    'table_name' => 'tbl_suppliers',
+                    'record_id'  => $id,
+                    'action'     => 'Updated',
+                    'old_data'   => json_encode($old_data),
+                    'new_data'   => json_encode($data),
+                    'description'=> 'Supplier updated',
+                    'created_at' => date('Y-m-d H:i:s')
+                ];
+                $this->db->insert('tbl_logs', $log);
+
+                $this->session->set_flashdata('success', 'Supplier updated successfully.');
             } else {
-                $this->session->set_flashdata('error', 'Failed to update customer. Please try again.');
+                $this->session->set_flashdata('error', 'Failed to update supplier. Please try again.');
             }
         } catch (Exception $e) {
             log_message('error', 'Supplier update failed: ' . $e->getMessage());
-            $this->session->set_flashdata('error', 'An error occurred while updating the customer.');
+            $this->session->set_flashdata('error', 'An error occurred while updating the supplier.');
         }
 
         redirect('suppliers');
     }
 
-    public function delete($id = null){
+
+    public function delete($id = null)
+    {
         if ($id === null) {
             $this->session->set_flashdata('error', 'Invalid supplier ID.');
             redirect('suppliers');
             return;
         }
 
+        $old_data = $this->supplierModel->get_by_id($id);
+
         $deleted = $this->supplierModel->delete($id);
 
         if ($deleted) {
+            $log = [
+                'user_id'    => $this->session->userdata('user_id'),
+                'table_name' => 'Supplier',
+                'record_id'  => $id,
+                'action'     => 'Deleted',
+                'old_data'   => json_encode($old_data),
+                'new_data'   => null,
+                'description'=> 'Supplier deleted',
+                'created_at' => date('Y-m-d H:i:s')
+            ];
+            $this->db->insert('tbl_logs', $log);
+
             $this->session->set_flashdata('success', 'Supplier deleted successfully.');
         } else {
             $this->session->set_flashdata('error', 'Failed to delete supplier.');
@@ -106,6 +154,6 @@ class Supplier extends CI_Controller {
     }
 
 
+
 }
 
-// Controller: Auth.php
