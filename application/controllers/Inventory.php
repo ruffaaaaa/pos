@@ -1,6 +1,6 @@
 <?php
 defined('BASEPATH') OR exit('No direct script access allowed');
-require_once FCPATH . 'vendor/autoload.php'; // Make sure to include this line at the top
+require_once FCPATH . 'vendor/autoload.php'; 
 
 
 use PhpOffice\PhpSpreadsheet\IOFactory;
@@ -11,7 +11,7 @@ class Inventory extends CI_Controller {
         parent::__construct();
         $this->load->model('authModel');
         $this->load->model('supplierModel'); 
-        $this->load->model('inventoryModel'); // Load the Inventory model
+        $this->load->model('inventoryModel');
         $this->load->model('customerModel');
         $this->load->model('categoryModel');
         $this->load->model('productModel');
@@ -22,11 +22,26 @@ class Inventory extends CI_Controller {
         if (!$this->session->userdata('user_id')) {
             redirect('auth/login');
         }
-
-         if ($this->session->userdata('role') === 'cashier') {
-        $this->session->set_flashdata('error', 'You are not allowed to access the dashboard.');
-        redirect('pos'); // or any other page for cashiers
+        
+        if ($this->session->userdata('role') === 'cashier') {
+            $this->session->set_flashdata('error', 'You are not allowed to access.');
+            redirect('inventory');
+        }
     }
+
+    private function log_action($table, $record_id, $action, $old = null, $new = null, $description = '') {
+        $this->db->insert('tbl_logs', [
+            'user_id'     => $this->session->userdata('user_id'),
+            'table_name'  => $table,
+            'record_id'   => $record_id,
+            'action'      => $action,
+            'old_data'    => $old ? json_encode($old) : null,
+            'new_data'    => $new ? json_encode($new) : null,
+            'description' => $description,
+            'created_at'  => date('Y-m-d H:i:s'),
+            'location' => $this->session->userdata('location'),
+
+        ]);
     }
 
 
@@ -44,7 +59,6 @@ class Inventory extends CI_Controller {
     }
     
     public function add_product() {
-        // Get form input values
         $barcode = $this->input->post('barcode');
         $product_name = $this->input->post('product_name');
         $category_id = $this->input->post('category_id');
@@ -53,11 +67,8 @@ class Inventory extends CI_Controller {
         $retail_price = $this->input->post('retail_price');
         $description = $this->input->post('description');
         $stock_in = $this->input->post('stock_in');
-
-
-
-        // Insert new product into the 'tbl_products' table
-        $this->db->insert('tbl_products', [
+    
+        $product_data = [
             'barcode' => $barcode,
             'product_name' => $product_name,
             'category_id' => $category_id,
@@ -65,25 +76,28 @@ class Inventory extends CI_Controller {
             'cost_price' => $cost_price,
             'retail_price' => $retail_price,
             'description' => $description,
-        ]);
-
-        // Get the inserted product's ID
+        ];
+        $this->db->insert('tbl_products', $product_data);
         $product_id = $this->db->insert_id();
-
-        // Insert the initial stock into the 'tbl_inventory' table
-        $this->db->insert('tbl_inventory', [
+    
+        $inventory_data = [
             'product_id' => $product_id,
             'stock_in' => $stock_in,
             'stock_out' => 0,
-            'current_stock' => $stock_in, // Assuming current stock is equal to stock in at the time of addition
-            'last_updated' => date('Y-m-d H:i:s')
-        ]);
-
-
-        // Redirect back to inventory page with a success message
+            'current_stock' => $stock_in,
+            'last_updated' => date('Y-m-d H:i:s'),
+            'location' => $this->session->userdata('location')
+        ];
+        $this->db->insert('tbl_inventory', $inventory_data);
+        $inventory_id = $this->db->insert_id();
+    
+        // Log action
+        $this->log_action('Inventory', $inventory_id, 'insert', null, $inventory_data, 'Inventory added manually');
+    
         $this->session->set_flashdata('success', 'Product added successfully.');
         redirect('inventory');
     }
+
 
     
     public function upload_excel() {
@@ -148,6 +162,9 @@ class Inventory extends CI_Controller {
                     'current_stock' => $current_stock
                 ];
                 $this->db->insert('tbl_inventory', $inventory_data);
+                
+                $this->log_action('Inventory', $this->db->insert_id(), 'insert', null, $inventory_data, 'Inventory added via Excel upload');
+
             }
             // Set flashdata for success message
             $this->session->set_flashdata('success', 'Import Successfully');
@@ -160,9 +177,6 @@ class Inventory extends CI_Controller {
         $query = $this->db->get_where('tbl_categories', ['category_name' => $category_name]);
         $category = $query->row();
 
-        // If category does not exist, you can either:
-        // - Return a default category_id (if applicable)
-        // - Return an error or handle accordingly
         return $category ? $category->category_id : null; // Or handle error if needed
     }
 
@@ -175,42 +189,46 @@ class Inventory extends CI_Controller {
     }
     
     public function delete($inventory_id) {
-        // Check if the inventory item exists
         $query = $this->db->get_where('tbl_inventory', ['inventory_id' => $inventory_id]);
         if ($query->num_rows() > 0) {
             $inventory = $query->row();
-
+    
+            $product = $this->db->get_where('tbl_products', ['product_id' => $inventory->product_id])->row();
+    
             $this->db->delete('tbl_inventory', ['inventory_id' => $inventory_id]);
-
             $this->db->delete('tbl_products', ['product_id' => $inventory->product_id]);
+    
+            // Log deletion
+            $this->log_action('Inventory', $inventory_id, 'delete', $inventory, null, 'Inventory deleted');
 
             $this->session->set_flashdata('success', 'Deleted successfully.');
         } else {
             $this->session->set_flashdata('error', 'Product not found.');
         }
-
+    
         redirect('inventory');
     }
 
 
+
     public function edit() {
-        // Get data from the form
         $inventory_id = $this->input->post('inventory_id');
+        $product_name = $this->input->post('product_name');
         $stock_in = $this->input->post('stock_in');
         $stock_out = $this->input->post('stock_out');
         $current_stock = $this->input->post('current_stock');
-
-        // Validate required fields
+        $product_id = $this->input->post('product_id');
+    
         if ($stock_in === null || $stock_out === null) {
             $this->session->set_flashdata('error', 'Stock In and Stock Out are required.');
             redirect('inventory');
         }
-
-        // Since current_stock input is disabled, it won't be posted
-        // So calculate current stock here if needed:
+    
+        $old_inventory = $this->db->get_where('tbl_inventory', ['inventory_id' => $inventory_id])->row();
+        $old_product = $this->db->get_where('tbl_products', ['product_id' => $product_id])->row();
+    
         $calculated_current_stock = $stock_in - $stock_out;
-
-        // Update the inventory data only
+    
         $this->db->where('inventory_id', $inventory_id);
         $this->db->update('tbl_inventory', [
             'stock_in' => $stock_in,
@@ -218,10 +236,22 @@ class Inventory extends CI_Controller {
             'current_stock' => $calculated_current_stock,
             'last_updated' => date('Y-m-d H:i:s')
         ]);
+    
+        $this->db->where('product_id', $product_id);
+        $this->db->update('tbl_products', [
+            'product_name' => $product_name
+        ]);
+    
+        // Fetch new data for logging
+        $new_inventory = $this->db->get_where('tbl_inventory', ['inventory_id' => $inventory_id])->row();
+        $new_product = $this->db->get_where('tbl_products', ['product_id' => $product_id])->row();
+    
+        $this->log_action('Inventory', $inventory_id, 'update', $old_inventory, $new_inventory, 'Inventory updated');
 
         $this->session->set_flashdata('success', 'Inventory updated successfully.');
         redirect('inventory');
     }
+
 
 
 

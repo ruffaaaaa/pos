@@ -13,11 +13,11 @@ class Dashboard extends CI_Controller {
         if (!$this->session->userdata('user_id')) {
             redirect('auth/login');
         }
-
-         if ($this->session->userdata('role') === 'cashier') {
-        $this->session->set_flashdata('error', 'You are not allowed to access the dashboard.');
-        redirect('pos'); // or any other page for cashiers
-    }
+        
+        if ($this->session->userdata('role') === 'cashier') {
+            $this->session->set_flashdata('error', 'You are not allowed to access.');
+            redirect('dashboard');
+        }
     }
 
     public function index() {
@@ -27,7 +27,6 @@ class Dashboard extends CI_Controller {
         $data['user'] = $this->dashboardModel->getUserCount();
         $data['product'] = $this->dashboardModel->getProductsInDemand();
 
-        // ✅ You can also pass username and role to the view
         $data['username'] = $this->session->userdata('username');
         $data['role'] = $this->session->userdata('role');
 

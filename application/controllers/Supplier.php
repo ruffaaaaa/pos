@@ -59,7 +59,9 @@ class Supplier extends CI_Controller {
                 'old_data'   => null,
                 'new_data'   => json_encode($data),
                 'description'=> 'Supplier created',
-                'created_at' => date('Y-m-d H:i:s')
+                'created_at' => date('Y-m-d H:i:s'),
+                'location' => $this->session->userdata('location'),
+
             ];
             $this->db->insert('tbl_logs', $log);
 

@@ -62,12 +62,21 @@ body {
 }
 
 .nav a:hover {
-    background: #f1b1af;
+    background: #dcdbdb;
 }
 
-.nav a.active {
+
+.nav a.active.store {
     background: #dc3545;
-    color: #ffffff;
+    /* Red */
+    color: white;
+}
+
+/* WAREHOUSE Style */
+.nav a.active.warehouse {
+    background: #007bff;
+    /* Bootstrap Blue */
+    color: white;
 }
 
 .nav a.active span {

@@ -30,48 +30,49 @@ class Purchase extends CI_Controller {
         ]);
     }
 
-public function process_po() {
-    $supplier_id = $this->input->post('supplier_id');
-    $items_json = $this->input->post('items');
-    $items = json_decode($items_json); // JSON array of product_id, quantity, unit_price
-    $user_id = $this->session->userdata('user_id');
-    $total_amount = $this->input->post('total_amount');
-
-    if (!$items || !is_array($items)) {
-        // Log the invalid input for debugging
-        log_message('error', 'Invalid or empty items JSON: ' . $items_json);
-        echo json_encode(['status' => 'error', 'message' => 'Invalid item list.']);
-        return;
-    }
-
-    // Save PO to database
-    $po_data = [
-        'supplier_id' => $supplier_id,
-        'user_id' => $user_id,
-        'total_amount' => $total_amount,
-        'status' => 'Pending',
-        'created_at' => date('Y-m-d H:i:s')
-    ];
-    $this->db->insert('tbl_purchase_orders', $po_data);
-    $po_id = $this->db->insert_id();
-
-    foreach ($items as $item) {
-        $this->db->insert('tbl_purchase_items', [
-            'po_id' => $po_id,
-            'product_id' => $item->product_id,
-            'quantity' => $item->quantity,
-            'unit_price' => $item->price,
-            'subtotal'   => $item->quantity * $item->price
-
+    public function process_po() {
+        $supplier_id = $this->input->post('supplier_id');
+        $items_json = $this->input->post('items');
+        $items = json_decode($items_json); // JSON array of product_id, quantity, unit_price
+        $user_id = $this->session->userdata('user_id');
+        $total_amount = $this->input->post('total_amount');
+    
+        if (!$items || !is_array($items)) {
+            // Log the invalid input for debugging
+            log_message('error', 'Invalid or empty items JSON: ' . $items_json);
+            echo json_encode(['status' => 'error', 'message' => 'Invalid item list.']);
+            return;
+        }
+    
+        // Save PO to database
+        $po_data = [
+            'supplier_id' => $supplier_id,
+            'user_id' => $user_id,
+            'total_amount' => $total_amount,
+            'status' => 'Pending',
+            'created_at' => date('Y-m-d H:i:s'),
+            'location' => $this->session->userdata('location')
+        ];
+        $this->db->insert('tbl_purchase_orders', $po_data);
+        $po_id = $this->db->insert_id();
+    
+        foreach ($items as $item) {
+            $this->db->insert('tbl_purchase_items', [
+                'po_id' => $po_id,
+                'product_id' => $item->product_id,
+                'quantity' => $item->quantity,
+                'unit_price' => $item->price,
+                'subtotal'   => $item->quantity * $item->price
+    
+            ]);
+        }
+    
+        echo json_encode([
+            'message' => 'Purchase Order created successfully.',
+            'po_id' => $po_id
         ]);
     }
-
-    echo json_encode([
-        'message' => 'Purchase Order created successfully.',
-        'po_id' => $po_id
-    ]);
-}
-
+    
 
     public function print_po($po_id) {
         $this->load->model('purchaseModel');

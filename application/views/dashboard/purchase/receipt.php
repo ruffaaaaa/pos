@@ -119,7 +119,7 @@
         </div>
 
         <div class="transaction-value">
-            <p class="total"><strong>Total Amount</strong> <span>₱<?= number_format($po->subtotal ?? 0, 2) ?></span></p>
+            <p class="total"><strong>Total Amount</strong> <span>₱<?= number_format($po->total_amount?? 0, 2) ?></span></p>
         </div>
 
         <div class="thanks">--- Thank you for your business ---</div>

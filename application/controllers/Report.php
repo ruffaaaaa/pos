@@ -21,15 +21,31 @@ class Report extends CI_Controller {
         if (!$this->session->userdata('user_id')) {
             redirect('auth/login');
         }
-
-         if ($this->session->userdata('role') === 'cashier') {
-        $this->session->set_flashdata('error', 'You are not allowed to access the dashboard.');
-        redirect('pos'); // or any other page for cashiers
+        
+        if ($this->session->userdata('role') === 'cashier') {
+            $this->session->set_flashdata('error', 'You are not allowed to access.');
+            redirect('reports');
+        }
     }
+
+
+    private function log_action($table, $record_id, $action, $old = null, $new = null, $description = '') {
+        $this->db->insert('tbl_logs', [
+            'user_id'     => $this->session->userdata('user_id'),
+            'table_name'  => $table,
+            'record_id'   => $record_id,
+            'action'      => $action,
+            'old_data'    => $old ? json_encode($old) : null,
+            'new_data'    => $new ? json_encode($new) : null,
+            'description' => $description,
+            'created_at'  => date('Y-m-d H:i:s'),
+            
+            'location' => $this->session->userdata('location'),
+
+        ]);
     }
 
-
-    public function index() {
+public function index() {
         $report = $this->input->get('report');
         $export = $this->input->get('export');
 
@@ -41,31 +57,36 @@ class Report extends CI_Controller {
         if ($report == 'sales') {
             $this->load->model('salesModel');
             $sales = $this->salesModel->get_sales_with_profit($start_date, $end_date);
-
+        
             if ($export == 'csv') {
+                $this->log_action('Sales Report', null, 'Exported', null, null, 'Exported sales report as CSV');
+
                 $this->export_sales_csv($sales);
-                return; // stop further processing
+                return;
             }
-
+        
             $data['sales'] = $sales;
-
+            $this->log_action('Sales Report', null, 'Viewed', null, null, 'Viewed Sales Report');
+            
         } elseif ($report == 'inventory') {
             $this->load->model('InventoryModel');
             $inventory = $this->InventoryModel->get_inventory_report($start_date, $end_date);
-
+        
             if ($export == 'csv') {
+                $this->log_action('Inventory Report', null, 'Exported', null, null, 'Exported Inventory report as CSV');
                 $this->export_inventory_csv($inventory);
-                return; // stop further processing
+                return;
             }
-
+        
             $data['inventory'] = $inventory;
-        }
-        elseif ($report == 'history') {
+            $this->log_action('Inventory Report', null, 'Viewed', null, null, 'Viewed Inventory Report');
+        
+        } elseif ($report == 'history') {
             $this->load->model('salesModel');
             $data['sales'] = $this->salesModel->get_all_sales($start_date, $end_date);
+            $this->log_action('Detailed Sales Report', null, 'Viewed', null, null, 'Viewed Detailed Sales Report');
 
-        } 
-
+        }
 
         $data['report'] = $report;
         $data['start_date'] = $start_date_raw; // for form input display
@@ -74,6 +95,7 @@ class Report extends CI_Controller {
 
         $this->load->view('main', $data);
     }
+
 
     private function export_sales_csv($sales) {
         header('Content-Type: text/csv');

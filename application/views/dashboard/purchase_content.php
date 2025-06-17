@@ -314,7 +314,7 @@
         </div>
 
         <input type="hidden" name="items" id="items-data">
-        <input type="hidden" name="total" id="total-data">
+        <input type="hidden" name="total_amount" id="total-data">
 
         <button type="submit">Print Purchase Order</button>
     </form>

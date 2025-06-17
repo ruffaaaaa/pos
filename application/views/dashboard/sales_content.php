@@ -259,7 +259,10 @@
                         <td style="font-size: 13px;"><?= $product->category_name ?></td>
 
                         <td style="font-size: 13px;">₱<?= number_format($product->retail_price, 2) ?></td>
-                        <td style="font-size: 13px;"><?= $product->current_stock?></td>
+                        <td style="font-size: 13px; <?= $product->current_stock <= -1 ? 'color: red;' : '' ?>">
+                            <?= $product->current_stock ?>
+                        </td>
+
                         <td style="font-size: 13px;"><button onclick="addToCart(<?= $product->product_id ?>)">Add</button></td>
                     </tr>
                 <?php endforeach; ?>

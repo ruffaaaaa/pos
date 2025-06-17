@@ -14,11 +14,26 @@ class Customer extends CI_Controller {
         if (!$this->session->userdata('user_id')) {
             redirect('auth/login');
         }
-
-         if ($this->session->userdata('role') === 'cashier') {
-        $this->session->set_flashdata('error', 'You are not allowed to access the dashboard.');
-        redirect('pos'); // or any other page for cashiers
+        
+        if ($this->session->userdata('role') === 'cashier') {
+            $this->session->set_flashdata('error', 'You are not allowed to access.');
+            redirect('customers');
+        }
     }
+
+    private function log_action($table, $record_id, $action, $old = null, $new = null, $description = '') {
+        $this->db->insert('tbl_logs', [
+            'user_id'     => $this->session->userdata('user_id'),
+            'table_name'  => $table,
+            'record_id'   => $record_id,
+            'action'      => $action,
+            'old_data'    => $old ? json_encode($old) : null,
+            'new_data'    => $new ? json_encode($new) : null,
+            'description' => $description,
+            'created_at'  => date('Y-m-d H:i:s'),
+            'location' => $this->session->userdata('location'),
+
+        ]);
     }
 
 
@@ -34,38 +49,32 @@ class Customer extends CI_Controller {
     
 
     public function store() {
-        // Set validation rules
         $this->form_validation->set_rules('customer_name', 'Customer Name', 'required');
         $this->form_validation->set_rules('phone_number', 'Phone Number', 'required');
-        $this->form_validation->set_rules('email', 'Email', 'required|valid_email');
 
-        // Check if the form is valid
         if ($this->form_validation->run() == FALSE) {
-            // Clean the validation errors to remove <p> tags for better display in toast
             $error_message = strip_tags(validation_errors());
-
-            // Set flashdata error message
             $this->session->set_flashdata('error', $error_message);
-
-            // Redirect back to form
             redirect('customers');
         } else {
-            // Prepare the data to be saved
             $data = [
                 'customer_name' => $this->input->post('customer_name'),
                 'phone_number'  => $this->input->post('phone_number'),
                 'email'         => $this->input->post('email'),
                 'address'       => $this->input->post('address'),
             ];
-
-            // Insert data into the customer table
+    
             if ($this->customerModel->insert($data)) {
+                $insert_id = $this->db->insert_id();
+    
+                // 🔍 Log the insertion
+                $this->log_action('Customers', $insert_id, 'insert', null, $data, 'Added new customer');
+    
                 $this->session->set_flashdata('success', 'Customer added successfully.');
             } else {
                 $this->session->set_flashdata('error', 'Failed to add customer. Please try again.');
             }
-
-            // Redirect to customer list
+    
             redirect('customers');
         }
     }
@@ -73,33 +82,53 @@ class Customer extends CI_Controller {
 
     public function update() {
         $id = $this->input->post('customer_id');
-        $data = [
+        
+        $new_data = [
             'customer_name' => $this->input->post('customer_name'),
             'phone_number'  => $this->input->post('phone_number'),
             'email'         => $this->input->post('email'),
             'address'       => $this->input->post('address')
         ];
-
-        $this->customerModel->update($id, $data);
+    
+        // Get old data for logging
+        $old_data = $this->db->get_where('tbl_customers', ['customer_id' => $id])->row_array();
+    
+        $this->customerModel->update($id, $new_data);
+    
+        // 🔍 Log the update
+        $this->log_action('Customers', $id, 'update', $old_data, $new_data, 'Updated customer');
+    
         $this->session->set_flashdata('success', 'Customer updated successfully.');
         redirect('customers');
     }
 
+
     public function delete($id = null){
         if ($id === null) {
-            $this->session->set_flashdata('error', 'Invalid supplier ID.');
+            $this->session->set_flashdata('error', 'Invalid customer ID.');
             redirect('customers');
             return;
         }
-
-        $deleted = $this->customerModel->delete($id);
-
-        if ($deleted) {
-            $this->session->set_flashdata('success', 'Supplier deleted successfully.');
-        } else {
-            $this->session->set_flashdata('error', 'Failed to delete supplier.');
+    
+        // Get old data before deletion for logging
+        $old_data = $this->db->get_where('tbl_customers', ['customer_id' => $id])->row_array();
+    
+        if (!$old_data) {
+            $this->session->set_flashdata('error', 'Customer not found.');
+            redirect('customers');
+            return;
         }
-
+    
+        $deleted = $this->customerModel->delete($id);
+    
+        if ($deleted) {
+            // 🔍 Log the deletion
+            $this->log_action('Customers', $id, 'delete', $old_data, null, 'Deleted customer');
+            $this->session->set_flashdata('success', 'Customer deleted successfully.');
+        } else {
+            $this->session->set_flashdata('error', 'Failed to delete customer.');
+        }
+    
         redirect('customers');
     }
 
